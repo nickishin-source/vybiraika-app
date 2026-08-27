@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Выбирайка — Языки</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Выбирайка">
+<meta name="theme-color" content="#0f1115">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1 id="module-title">Языки</h1>
+</header>
+
+<main id="view-today" class="view">
+  <section class="today-card">
+    <p class="today-label">Следующая активность</p>
+    <h2 id="today-activity">—</h2>
+    <button id="btn-done" class="btn-primary">Готово ✓</button>
+    <p id="today-empty-hint" class="hint hidden">Добавьте хотя бы одну активность на вкладке «Активности».</p>
+  </section>
+
+  <section class="recent">
+    <p class="recent-title">Последние отметки</p>
+    <ul id="recent-list" class="log-list"></ul>
+  </section>
+</main>
+
+<main id="view-history" class="view hidden">
+  <section>
+    <p class="section-title">История</p>
+    <ul id="history-list" class="log-list"></ul>
+    <p id="history-empty" class="hint hidden">Пока нет ни одной отметки.</p>
+  </section>
+</main>
+
+<main id="view-activities" class="view hidden">
+  <section>
+    <p class="section-title">Цикл активностей</p>
+    <ul id="activities-list" class="activities-list"></ul>
+    <form id="add-activity-form" class="add-form">
+      <input id="new-activity-input" type="text" placeholder="Новая активность" autocomplete="off">
+      <button type="submit" class="btn-secondary">+</button>
+    </form>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab active" data-view="today">
+    <span class="tab-icon">●</span>
+    <span>Сегодня</span>
+  </button>
+  <button class="tab" data-view="history">
+    <span class="tab-icon">≡</span>
+    <span>История</span>
+  </button>
+  <button class="tab" data-view="activities">
+    <span class="tab-icon">⚙</span>
+    <span>Активности</span>
+  </button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>

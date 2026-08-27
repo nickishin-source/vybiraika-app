@@ -1,0 +1,210 @@
+:root {
+  --bg: #f4f4f7;
+  --card: #ffffff;
+  --text: #16171a;
+  --muted: #6b6f76;
+  --accent: #3b6dfb;
+  --accent-text: #ffffff;
+  --border: #e4e4ea;
+  --danger: #d84a4a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --card: #1a1c22;
+    --text: #f1f1f4;
+    --muted: #9296a1;
+    --accent: #5b86ff;
+    --accent-text: #0f1115;
+    --border: #2a2d35;
+    --danger: #ff6b6b;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow-x: hidden;
+}
+
+.topbar {
+  padding: 12px 20px 8px;
+  flex-shrink: 0;
+}
+.topbar h1 {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 20px 20px;
+}
+.hidden { display: none !important; }
+
+.today-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 20px;
+  text-align: center;
+  margin-top: 12px;
+}
+.today-label {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#today-activity {
+  margin: 0 0 22px;
+  font-size: 26px;
+  line-height: 1.3;
+  min-height: 34px;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: 14px;
+  padding: 14px 28px;
+  font-size: 17px;
+  font-weight: 600;
+  width: 100%;
+  max-width: 320px;
+}
+.btn-primary:active { opacity: 0.75; }
+.btn-primary:disabled { opacity: 0.4; }
+
+.btn-secondary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: 12px;
+  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 14px;
+}
+
+.recent { margin-top: 28px; }
+.recent-title, .section-title {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+
+.log-list, .activities-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.log-list li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.log-item-title { font-size: 15px; }
+.log-item-date { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+.activities-list li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 10px 10px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.activity-title {
+  flex: 1;
+  font-size: 15px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+.activity-btn:active { background: var(--border); }
+.activity-btn.danger { color: var(--danger); }
+
+.add-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.add-form input {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+  height: 44px;
+  color: var(--text);
+  font-size: 15px;
+}
+.add-form input:focus { outline: 2px solid var(--accent); }
+
+.tabbar {
+  flex-shrink: 0;
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 10px 4px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+}
+.tab-icon { font-size: 18px; }
+.tab.active { color: var(--accent); }
