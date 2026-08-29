@@ -1,4 +1,4 @@
-// Циклическая логика модулей — см. docs/core-cycle-logic.md и docs/reading-module.md
+// Циклическая логика модулей — см. docs/core-cycle-logic.md, docs/reading-module.md, docs/activities-module.md
 const CURRENT_MODULE_KEY = "vybiraika:currentModule";
 
 const MODULES = [
@@ -43,6 +43,57 @@ const MODULES = [
       "Книга",
     ],
   },
+  {
+    id: "activities",
+    title: "Активности",
+    hasNote: true,
+    showTime: true,
+    // Три независимых варианта цикла (см. docs/activities-module.md и
+    // core-cycle-logic.md раздел 9) — у каждого свой лог и своя очередь.
+    variants: [
+      {
+        id: "short",
+        title: "Short",
+        storageKey: "vybiraika:activities:short:v1",
+        defaultTitles: [
+          'MLO: флаг "Short"',
+          "Plan & Org - Триаж почты и уведомлений",
+        ],
+      },
+      {
+        id: "medium",
+        title: "Medium",
+        storageKey: "vybiraika:activities:medium:v1",
+        defaultTitles: [
+          'MLO: флаг "Medium"',
+          "Отработка задач из почты",
+          "Plan & Org - Триаж почты и уведомлений",
+          'MLO: флаг "Medium"',
+          "Отработка задач из почты",
+          "Plan & Org - Переработка встреч",
+          'MLO: флаг "Medium"',
+          "Отработка задач из почты",
+          "Plan & Org - Weekly Review",
+        ],
+      },
+      {
+        id: "long",
+        title: "Long",
+        storageKey: "vybiraika:activities:long:v1",
+        defaultTitles: [
+          'MLO: флаг "Long"',
+          'Doing - MLO: флаг "Medium"',
+          "Plan & Org - Переработка встреч",
+          'MLO: флаг "Long"',
+          "Doing - Отработка задач из почты",
+          "Plan & Org - Weekly Review",
+          'MLO: флаг "Long"',
+          'Doing - MLO: флаг "Medium"',
+          "Plan & Org - Триаж почты и уведомлений",
+        ],
+      },
+    ],
+  },
 ];
 
 function makeId() {
@@ -53,30 +104,54 @@ function getModule(id) {
   return MODULES.find((m) => m.id === id) || MODULES[0];
 }
 
+function getVariant(module, variantId) {
+  return module.variants.find((v) => v.id === variantId) || module.variants[0];
+}
+
 function loadCurrentModuleId() {
   const saved = localStorage.getItem(CURRENT_MODULE_KEY);
   return MODULES.some((m) => m.id === saved) ? saved : MODULES[0].id;
 }
 
-function loadModuleState(module) {
+function loadCurrentVariantId(module) {
+  const saved = localStorage.getItem(`vybiraika:currentVariant:${module.id}`);
+  return module.variants.some((v) => v.id === saved) ? saved : module.variants[0].id;
+}
+
+// storageKey/defaultTitles модуля без вариантов либо текущего варианта модуля с вариантами
+function activeStorageKey() {
+  return currentModule.variants ? currentVariant.storageKey : currentModule.storageKey;
+}
+function activeDefaultTitles() {
+  return currentModule.variants ? currentVariant.defaultTitles : currentModule.defaultTitles;
+}
+
+function loadRawState(storageKey) {
   try {
-    const raw = localStorage.getItem(module.storageKey);
+    const raw = localStorage.getItem(storageKey);
     if (raw) return JSON.parse(raw);
   } catch (e) {
     console.warn("Не удалось прочитать localStorage", e);
   }
-  return {
-    activities: module.defaultTitles.map((title) => ({ id: makeId(), title })),
-    log: [],
-  };
+  return null;
+}
+
+function loadState(storageKey, defaultTitles) {
+  return (
+    loadRawState(storageKey) || {
+      activities: defaultTitles.map((title) => ({ id: makeId(), title })),
+      log: [],
+    }
+  );
 }
 
 function saveState() {
-  localStorage.setItem(currentModule.storageKey, JSON.stringify(state));
+  localStorage.setItem(activeStorageKey(), JSON.stringify(state));
 }
 
 let currentModule = getModule(loadCurrentModuleId());
-let state = loadModuleState(currentModule);
+let currentVariant = currentModule.variants ? getVariant(currentModule, loadCurrentVariantId(currentModule)) : null;
+let state = loadState(activeStorageKey(), activeDefaultTitles());
 
 // --- Основной алгоритм (см. docs/core-cycle-logic.md, раздел 3) ---
 function getNextActivity() {
@@ -95,12 +170,31 @@ function getNextActivity() {
   return activities[nextIndex];
 }
 
-// Предзаполнение уточнения — по названию активности, см. core-cycle-logic.md раздел 8
+// Предзаполнение уточнения — по названию активности, см. core-cycle-logic.md раздел 8.
+// Для модулей с вариантами (раздел 9) поиск идёт по логам всех вариантов сразу.
 function getLastNoteForTitle(title) {
-  for (let i = state.log.length - 1; i >= 0; i--) {
-    if (state.log[i].title === title) return state.log[i].note || "";
+  if (!currentModule.variants) {
+    for (let i = state.log.length - 1; i >= 0; i--) {
+      if (state.log[i].title === title) return state.log[i].note || "";
+    }
+    return "";
   }
-  return "";
+
+  let bestNote = "";
+  let bestTs = -Infinity;
+  currentModule.variants.forEach((variant) => {
+    const log = variant.id === currentVariant.id ? state.log : (loadRawState(variant.storageKey) || {}).log || [];
+    for (let i = log.length - 1; i >= 0; i--) {
+      if (log[i].title === title) {
+        if (log[i].ts > bestTs) {
+          bestTs = log[i].ts;
+          bestNote = log[i].note || "";
+        }
+        break;
+      }
+    }
+  });
+  return bestNote;
 }
 
 function markDone() {
@@ -255,22 +349,51 @@ function addActivity(title) {
 
 function renderAll() {
   document.getElementById("module-title").textContent = currentModule.title;
+
+  const variantWrap = document.getElementById("variant-select-wrap");
+  const variantSelect = document.getElementById("variant-select");
+  if (currentModule.variants) {
+    variantWrap.classList.remove("hidden");
+    variantSelect.innerHTML = "";
+    currentModule.variants.forEach((v) => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = v.title;
+      variantSelect.appendChild(opt);
+    });
+    variantSelect.value = currentVariant.id;
+  } else {
+    variantWrap.classList.add("hidden");
+  }
+
   renderToday();
   renderHistory();
   renderActivities();
 }
 
-// --- Переключение модуля ---
+// --- Переключение модуля/варианта ---
 function switchModule(moduleId) {
   currentModule = getModule(moduleId);
-  state = loadModuleState(currentModule);
+  currentVariant = currentModule.variants ? getVariant(currentModule, loadCurrentVariantId(currentModule)) : null;
+  state = loadState(activeStorageKey(), activeDefaultTitles());
   localStorage.setItem(CURRENT_MODULE_KEY, currentModule.id);
   document.getElementById("module-select").value = currentModule.id;
   renderAll();
 }
 
+function switchVariant(variantId) {
+  currentVariant = getVariant(currentModule, variantId);
+  state = loadState(activeStorageKey(), activeDefaultTitles());
+  localStorage.setItem(`vybiraika:currentVariant:${currentModule.id}`, currentVariant.id);
+  renderAll();
+}
+
 document.getElementById("module-select").addEventListener("change", (e) => {
   switchModule(e.target.value);
+});
+
+document.getElementById("variant-select").addEventListener("change", (e) => {
+  switchVariant(e.target.value);
 });
 
 // --- Навигация по вкладкам ---

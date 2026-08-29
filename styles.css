@@ -64,6 +64,10 @@ body {
   padding: 6px 10px;
   flex-shrink: 0;
 }
+.variant-row {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
 
 .view {
   flex: 1;
