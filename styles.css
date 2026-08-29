@@ -181,7 +181,7 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: baseline;
+  align-items: center;
 }
 .log-item-title { font-size: 15px; flex: 1; min-width: 0; }
 .log-item-date { font-size: 13px; color: var(--muted); white-space: nowrap; }

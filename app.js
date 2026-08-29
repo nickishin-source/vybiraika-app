@@ -269,9 +269,30 @@ function renderLogItem(entry) {
   const date = document.createElement("span");
   date.className = "log-item-date";
   date.textContent = currentModule.showTime ? formatDateTime(entry.ts) : formatDate(entry.date);
+  const delBtn = document.createElement("button");
+  delBtn.className = "activity-btn danger";
+  delBtn.textContent = "✕";
+  delBtn.setAttribute("aria-label", "Удалить запись");
+  delBtn.onclick = () => deleteLogEntry(entry);
   li.appendChild(title);
   li.appendChild(date);
+  li.appendChild(delBtn);
   return li;
+}
+
+// Удаление записи лога (см. docs/core-cycle-logic.md, раздел 11).
+// Ищем по ссылке на объект, а не по индексу: entry — тот же объект,
+// что лежит в state.log, независимо от того, из какого списка
+// ("История" или "Последние отметки") пришёл вызов.
+function deleteLogEntry(entry) {
+  const when = currentModule.showTime ? formatDateTime(entry.ts) : formatDate(entry.date);
+  const label = entry.note ? `${entry.title} — ${entry.note}` : entry.title;
+  if (!confirm(`Удалить запись «${label}» от ${when}?`)) return;
+  const index = state.log.indexOf(entry);
+  if (index === -1) return;
+  state.log.splice(index, 1);
+  saveState();
+  renderAll();
 }
 
 // --- Рендер: "История" ---
