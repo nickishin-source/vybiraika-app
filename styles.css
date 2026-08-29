@@ -145,6 +145,18 @@ body {
   margin-top: 14px;
 }
 
+.export { margin-top: 28px; }
+.export-buttons {
+  display: flex;
+  gap: 10px;
+}
+.export-buttons .btn-secondary {
+  width: auto;
+  height: auto;
+  font-size: 14px;
+  padding: 10px 14px;
+}
+
 .recent { margin-top: 28px; }
 .recent-title, .section-title {
   color: var(--muted);

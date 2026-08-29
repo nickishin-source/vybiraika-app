@@ -371,6 +371,84 @@ function renderAll() {
   renderActivities();
 }
 
+// --- Экспорт лога (см. docs/core-cycle-logic.md, раздел 10) ---
+// Экспорт всегда берёт данные всех модулей/вариантов из localStorage напрямую
+// (не только activeStorageKey), а не текущий "state" — так что открытый сейчас
+// модуль ничем не выделен.
+function collectExportRows() {
+  const rows = [];
+  MODULES.forEach((module) => {
+    const sources = module.variants
+      ? module.variants.map((v) => ({ variantTitle: v.title, storageKey: v.storageKey }))
+      : [{ variantTitle: "", storageKey: module.storageKey }];
+    sources.forEach(({ variantTitle, storageKey }) => {
+      const log = (loadRawState(storageKey) || {}).log || [];
+      log.forEach((entry) => {
+        rows.push({ moduleTitle: module.title, variantTitle, ...entry });
+      });
+    });
+  });
+  rows.sort((a, b) => a.ts - b.ts);
+  return rows;
+}
+
+function csvEscape(value) {
+  const str = String(value ?? "");
+  return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+}
+
+function exportRowsToCsv(rows) {
+  const header = ["Модуль", "Вариант", "Активность", "Уточнение", "Дата", "Время"];
+  const lines = [header.map(csvEscape).join(",")];
+  rows.forEach((r) => {
+    const time = new Date(r.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    lines.push(
+      [r.moduleTitle, r.variantTitle, r.title, r.note || "", r.date, time].map(csvEscape).join(",")
+    );
+  });
+  return lines.join("\n");
+}
+
+function collectExportData() {
+  const data = {};
+  MODULES.forEach((module) => {
+    const sources = module.variants ? module.variants : [module];
+    sources.forEach((source) => {
+      data[source.storageKey] = loadRawState(source.storageKey) || { activities: [], log: [] };
+    });
+  });
+  return { app: "vybiraika", exportedAt: new Date().toISOString(), data };
+}
+
+function downloadFile(content, filename, mimeType, withBom) {
+  const blob = new Blob([withBom ? "\uFEFF" + content : content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportDateStamp() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function exportCsv() {
+  const csv = exportRowsToCsv(collectExportRows());
+  downloadFile(csv, `vybiraika-export-${exportDateStamp()}.csv`, "text/csv;charset=utf-8", true);
+}
+
+function exportJson() {
+  const json = JSON.stringify(collectExportData(), null, 2);
+  downloadFile(json, `vybiraika-export-${exportDateStamp()}.json`, "application/json;charset=utf-8", false);
+}
+
+document.getElementById("export-csv-btn").addEventListener("click", exportCsv);
+document.getElementById("export-json-btn").addEventListener("click", exportJson);
+
 // --- Переключение модуля/варианта ---
 function switchModule(moduleId) {
   currentModule = getModule(moduleId);
