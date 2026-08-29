@@ -1,38 +1,82 @@
-// Модуль "Языки": реализация циклической логики из docs/core-cycle-logic.md
-const STORAGE_KEY = "vybiraika:languages:v1";
+// Циклическая логика модулей — см. docs/core-cycle-logic.md и docs/reading-module.md
+const CURRENT_MODULE_KEY = "vybiraika:currentModule";
 
-const DEFAULT_ACTIVITIES = [
-  "DE — учение слов",
-  "DE — внесение слов",
-  "IT — учение слов",
-  "IT — внесение слов",
-  "IT — упражнения",
-  "FR — учение слов",
-  "FR — внесение слов",
-  "EN — учение слов",
-  "EN — внесение слов",
-  "Русский",
-].map((title) => ({ id: makeId(), title }));
+const MODULES = [
+  {
+    id: "languages",
+    title: "Языки",
+    storageKey: "vybiraika:languages:v1",
+    hasNote: false,
+    showTime: false,
+    defaultTitles: [
+      "DE — учение слов",
+      "DE — внесение слов",
+      "IT — учение слов",
+      "IT — внесение слов",
+      "IT — упражнения",
+      "FR — учение слов",
+      "FR — внесение слов",
+      "EN — учение слов",
+      "EN — внесение слов",
+      "Русский",
+    ],
+  },
+  {
+    id: "reading",
+    title: "Чтение",
+    storageKey: "vybiraika:reading:v1",
+    hasNote: true,
+    showTime: true,
+    defaultTitles: [
+      "Другое вечера",
+      "Книга",
+      "МЖ и Opernwelt",
+      "Программки / 2 Read в метро / Telegram",
+      "Рабочее",
+      "AI-беседы и вопросы",
+      "Книга",
+      "МЖ и Opernwelt",
+      "Программки / 2 Read в метро / Telegram",
+      "Другое вечера",
+      "Книга",
+      "Другое вечера",
+      "Книга",
+    ],
+  },
+];
 
 function makeId() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-function loadState() {
+function getModule(id) {
+  return MODULES.find((m) => m.id === id) || MODULES[0];
+}
+
+function loadCurrentModuleId() {
+  const saved = localStorage.getItem(CURRENT_MODULE_KEY);
+  return MODULES.some((m) => m.id === saved) ? saved : MODULES[0].id;
+}
+
+function loadModuleState(module) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(module.storageKey);
     if (raw) return JSON.parse(raw);
   } catch (e) {
     console.warn("Не удалось прочитать localStorage", e);
   }
-  return { activities: DEFAULT_ACTIVITIES, log: [] };
+  return {
+    activities: module.defaultTitles.map((title) => ({ id: makeId(), title })),
+    log: [],
+  };
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(currentModule.storageKey, JSON.stringify(state));
 }
 
-let state = loadState();
+let currentModule = getModule(loadCurrentModuleId());
+let state = loadModuleState(currentModule);
 
 // --- Основной алгоритм (см. docs/core-cycle-logic.md, раздел 3) ---
 function getNextActivity() {
@@ -51,16 +95,28 @@ function getNextActivity() {
   return activities[nextIndex];
 }
 
+// Предзаполнение уточнения — по названию активности, см. core-cycle-logic.md раздел 8
+function getLastNoteForTitle(title) {
+  for (let i = state.log.length - 1; i >= 0; i--) {
+    if (state.log[i].title === title) return state.log[i].note || "";
+  }
+  return "";
+}
+
 function markDone() {
   const activity = getNextActivity();
   if (!activity) return;
   const today = new Date();
-  state.log.push({
+  const entry = {
     activityId: activity.id,
     title: activity.title, // снимок названия на момент отметки
     date: today.toISOString().slice(0, 10),
     ts: today.getTime(),
-  });
+  };
+  if (currentModule.hasNote) {
+    entry.note = document.getElementById("today-note-input").value.trim();
+  }
+  state.log.push(entry);
   saveState();
   renderAll();
 }
@@ -70,21 +126,37 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  const date = d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  return `${date} ${time}`;
+}
+
 // --- Рендер: "Сегодня" ---
 function renderToday() {
   const activity = getNextActivity();
   const titleEl = document.getElementById("today-activity");
   const btn = document.getElementById("btn-done");
   const emptyHint = document.getElementById("today-empty-hint");
+  const noteWrap = document.getElementById("today-note-wrap");
+  const noteInput = document.getElementById("today-note-input");
 
   if (!activity) {
     titleEl.textContent = "—";
     btn.disabled = true;
     emptyHint.classList.remove("hidden");
+    noteWrap.classList.add("hidden");
   } else {
     titleEl.textContent = activity.title;
     btn.disabled = false;
     emptyHint.classList.add("hidden");
+    if (currentModule.hasNote) {
+      noteWrap.classList.remove("hidden");
+      noteInput.value = getLastNoteForTitle(activity.title);
+    } else {
+      noteWrap.classList.add("hidden");
+    }
   }
 
   const recentList = document.getElementById("recent-list");
@@ -99,10 +171,10 @@ function renderLogItem(entry) {
   const li = document.createElement("li");
   const title = document.createElement("span");
   title.className = "log-item-title";
-  title.textContent = entry.title;
+  title.textContent = entry.note ? `${entry.title} — ${entry.note}` : entry.title;
   const date = document.createElement("span");
   date.className = "log-item-date";
-  date.textContent = formatDate(entry.date);
+  date.textContent = currentModule.showTime ? formatDateTime(entry.ts) : formatDate(entry.date);
   li.appendChild(title);
   li.appendChild(date);
   return li;
@@ -182,10 +254,24 @@ function addActivity(title) {
 }
 
 function renderAll() {
+  document.getElementById("module-title").textContent = currentModule.title;
   renderToday();
   renderHistory();
   renderActivities();
 }
+
+// --- Переключение модуля ---
+function switchModule(moduleId) {
+  currentModule = getModule(moduleId);
+  state = loadModuleState(currentModule);
+  localStorage.setItem(CURRENT_MODULE_KEY, currentModule.id);
+  document.getElementById("module-select").value = currentModule.id;
+  renderAll();
+}
+
+document.getElementById("module-select").addEventListener("change", (e) => {
+  switchModule(e.target.value);
+});
 
 // --- Навигация по вкладкам ---
 function switchView(name) {
@@ -209,6 +295,7 @@ document.getElementById("add-activity-form").addEventListener("submit", (e) => {
   input.value = "";
 });
 
+document.getElementById("module-select").value = currentModule.id;
 renderAll();
 
 // --- PWA: регистрация service worker ---

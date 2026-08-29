@@ -1,4 +1,4 @@
-const CACHE_NAME = "vybiraika-v1";
+const CACHE_NAME = "vybiraika-v2";
 const APP_SHELL = [
   "./",
   "./index.html",

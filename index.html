@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Выбирайка — Языки</title>
+<title>Выбирайка</title>
 
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
@@ -17,13 +17,22 @@
 <body>
 
 <header class="topbar">
-  <h1 id="module-title">Языки</h1>
+  <div class="topbar-row">
+    <h1 id="module-title">Языки</h1>
+    <select id="module-select" class="module-select">
+      <option value="languages">Языки</option>
+      <option value="reading">Чтение</option>
+    </select>
+  </div>
 </header>
 
 <main id="view-today" class="view">
   <section class="today-card">
     <p class="today-label">Следующая активность</p>
     <h2 id="today-activity">—</h2>
+    <div id="today-note-wrap" class="note-wrap hidden">
+      <input id="today-note-input" type="text" class="note-input" placeholder="Уточнение (необязательно)" autocomplete="off">
+    </div>
     <button id="btn-done" class="btn-primary">Готово ✓</button>
     <p id="today-empty-hint" class="hint hidden">Добавьте хотя бы одну активность на вкладке «Активности».</p>
   </section>
