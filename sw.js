@@ -1,7 +1,7 @@
 // Бамп этой версии при любом изменении файлов из APP_SHELL — иначе браузер
 // не заметит обновление sw.js и уже установленные PWA продолжат бессрочно
 // отдавать старые файлы из кеша (стратегия ниже — cache-first).
-const CACHE_NAME = "vybiraika-v4";
+const CACHE_NAME = "vybiraika-v5";
 const APP_SHELL = [
   "./",
   "./index.html",

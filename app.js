@@ -94,6 +94,24 @@ const MODULES = [
       },
     ],
   },
+  {
+    id: "listening",
+    title: "Прослушка",
+    storageKey: "vybiraika:listening:v1",
+    hasNote: true,
+    notePrefill: false,
+    showTime: true,
+    defaultTitles: [
+      "Шульман",
+      "КАП",
+      "Easy German",
+      "Подготовка к концерту",
+      "Лекции Ивана Соколова",
+      "Канал Ирины Якутенко",
+      "Тренер Ирина Ковалёва",
+      "Разное (Саша Грибанов, Мария Плескачёва и др.)",
+    ],
+  },
 ];
 
 function makeId() {
@@ -247,7 +265,7 @@ function renderToday() {
     emptyHint.classList.add("hidden");
     if (currentModule.hasNote) {
       noteWrap.classList.remove("hidden");
-      noteInput.value = getLastNoteForTitle(activity.title);
+      noteInput.value = currentModule.notePrefill === false ? "" : getLastNoteForTitle(activity.title);
     } else {
       noteWrap.classList.add("hidden");
     }
